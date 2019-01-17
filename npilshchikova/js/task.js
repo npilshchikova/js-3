@@ -1,17 +1,18 @@
 /**
  * ToDo List item object
  * 
- * @param {number} id          task id, expected to be unique
- * @param {string} name        short name for task
- * @param {string} description detailed description
- * @param {Date}   deadline    expired date
+ * @param {number}  id          task id, expected to be unique
+ * @param {string}  name        short name for task
+ * @param {string}  description detailed description
+ * @param {Date}    deadline    expired date
+ * @param {boolean} done        true if task finished
  */
-function taskItem(id, name, description, deadline) {
+function taskItem(id, name, description, deadline, done) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.deadline = deadline;
-    this.done = false;
+    this.done = done;
 }
 
 /**

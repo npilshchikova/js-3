@@ -1,4 +1,4 @@
-var tasksArray = (
+var tasksModule = (
     function () {
         var counter = 0;
         var items = [];
