@@ -6,21 +6,6 @@ from flask import Flask
 from flask_restful import Api, Resource, reqparse
 
 
-class TaskList(Resource):
-
-    def get(self, task_id):
-        pass
-
-    def post(self, task_id):
-        pass
-
-    def put(self, task_id):
-        pass
-
-    def delete(self, task_id):
-        pass
-
-
 def create_random_task_description():
     starts = ['I should', 'It is necessary to', 'I must', 'It is planned to']
     actions = ['do', 'create', 'find', 'investigate', 'explore', 'update', 'pass', 'write', 'read', 'buy', 'send']
@@ -79,14 +64,74 @@ def generate_sample_data():
     return tasks
 
 
-if __name__ == '__main__':
+class TaskList(Resource):
     # sample data
-    sample_data = generate_sample_data()
+    tasks = generate_sample_data()
 
+    def get(self, task_id):
+        for task in self.tasks:
+            if task_id == task['id']:
+                return task, 200
+        return 'Nod found', 404
+
+    def post(self, task_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('name')
+        parser.add_argument('description')
+        parser.add_argument('deadline')
+        parser.add_argument('done')
+        args = parser.parse_args()
+
+        for task in self.tasks:
+            if task_id == task['id']:
+                return 'Task with id {} already exists'.format(task_id), 400
+
+        new_task = {
+            'id': id,
+            'name': args['name'],
+            'description': args['description'],
+            'deadline': args['deadline'],
+            'done': args['done']
+        }
+        self.tasks.append(new_task)
+        return new_task, 201
+
+    def put(self, task_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('name')
+        parser.add_argument('description')
+        parser.add_argument('deadline')
+        parser.add_argument('done')
+        args = parser.parse_args()
+
+        for task in self.tasks:
+            if task_id == task['id']:
+                task['name'] = args['name']
+                task['description'] = args['description']
+                task['deadline'] = args['deadline']
+                task['done'] = args['done']
+                return task, 200
+
+        new_task = {
+            'id': id,
+            'name': args['name'],
+            'description': args['description'],
+            'deadline': args['deadline'],
+            'done': args['done']
+        }
+        self.tasks.append(new_task)
+        return new_task, 201
+
+    def delete(self, task_id):
+        self.tasks = [task for task in self.tasks if task['id'] != task_id]
+        return 'Task with id {} deleted'.format(task_id), 200
+
+
+if __name__ == '__main__':
     # flask application
     app = Flask(__name__)
     api = Api(app)
-    api.add_resource(TaskList, 'tasks/<string:id>')
+    api.add_resource(TaskList, '/tasks/<string:id>')
 
     # run
-    app.run()
+    app.run(debug=True)
