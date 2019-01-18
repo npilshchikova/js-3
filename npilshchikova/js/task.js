@@ -32,7 +32,41 @@ taskItem.prototype.deadlineIsComing = function() {
         return (
             today.getFullYear() === this.deadline.getFullYear() 
             & today.getMonth() === this.deadline.getMonth() 
-            & today.getDate() === this.deadline.getDate() - 1
+            & today.getDate() === this.deadline.getDate() - 1  // incorrect for first month day!!!
+        );
+    } else {
+        // deadline not set
+        return false;
+    }
+}
+
+/**
+ * Check if current task deadline will be tomorrow
+ */
+taskItem.prototype.deadlineIsHere = function() {
+    if (this.deadline) {
+        var today = new Date();
+        return (
+            today.getFullYear() === this.deadline.getFullYear() 
+            & today.getMonth() === this.deadline.getMonth() 
+            & today.getDate() === this.deadline.getDate()
+        );
+    } else {
+        // deadline not set
+        return false;
+    }
+}
+
+/**
+ * Check if current task deadline will be in a week
+ */
+taskItem.prototype.deadlineInWeek = function() {
+    if (this.deadline) {
+        var today = new Date();
+        return (
+            today.getFullYear() === this.deadline.getFullYear() 
+            & today.getMonth() === this.deadline.getMonth() 
+            & today.getDate() >= this.deadline.getDate()  // incorrect!!!
         );
     } else {
         // deadline not set
