@@ -3,6 +3,7 @@ import random
 import urllib.request
 import urllib.error
 from flask import Flask
+from flask_cors import CORS
 from flask_restful import Api, Resource, reqparse
 
 
@@ -51,7 +52,7 @@ def generate_sample_data():
     tasks = []
 
     # add tasks to list
-    for i in range(random.randint(5, 20)):
+    for i in range(random.randint(5, 25)):
         # task will be a dict to simplify serialization to json
         tasks.append({
             'id': i,
@@ -64,12 +65,20 @@ def generate_sample_data():
     return tasks
 
 
+# global sample data
+tasks = generate_sample_data()
+
+
 class TaskList(Resource):
-    # sample data
-    tasks = generate_sample_data()
+
+    def get(self):
+        return tasks
+
+
+class Task(TaskList):
 
     def get(self, task_id):
-        for task in self.tasks:
+        for task in tasks:
             if task_id == task['id']:
                 return task, 200
         return 'Nod found', 404
@@ -79,21 +88,21 @@ class TaskList(Resource):
         parser.add_argument('name')
         parser.add_argument('description')
         parser.add_argument('deadline')
-        parser.add_argument('done')
+        parser.add_argument('done', type=bool)
         args = parser.parse_args()
 
-        for task in self.tasks:
+        for task in tasks:
             if task_id == task['id']:
                 return 'Task with id {} already exists'.format(task_id), 400
 
         new_task = {
-            'id': id,
+            'id': task_id,
             'name': args['name'],
             'description': args['description'],
             'deadline': args['deadline'],
             'done': args['done']
         }
-        self.tasks.append(new_task)
+        tasks.append(new_task)
         return new_task, 201
 
     def put(self, task_id):
@@ -101,29 +110,36 @@ class TaskList(Resource):
         parser.add_argument('name')
         parser.add_argument('description')
         parser.add_argument('deadline')
-        parser.add_argument('done')
+        parser.add_argument('done', type=bool)
         args = parser.parse_args()
 
-        for task in self.tasks:
+        for task in tasks:
             if task_id == task['id']:
-                task['name'] = args['name']
-                task['description'] = args['description']
-                task['deadline'] = args['deadline']
-                task['done'] = args['done']
+                if args['name'] is not None:
+                    task['name'] = args['name']
+                if args['description'] is not None:
+                    task['description'] = args['description']
+                if args['deadline'] is not None:
+                    task['deadline'] = args['deadline']
+                if args['done'] is not None:
+                    task['done'] = args['done']
                 return task, 200
 
         new_task = {
-            'id': id,
+            'id': task_id,
             'name': args['name'],
             'description': args['description'],
             'deadline': args['deadline'],
             'done': args['done']
         }
-        self.tasks.append(new_task)
+        tasks.append(new_task)
         return new_task, 201
 
     def delete(self, task_id):
-        self.tasks = [task for task in self.tasks if task['id'] != task_id]
+        global tasks
+        tasks = [task for task in tasks if task['id'] != task_id]
+        for i in tasks:
+            print(i)
         return 'Task with id {} deleted'.format(task_id), 200
 
 
@@ -131,7 +147,14 @@ if __name__ == '__main__':
     # flask application
     app = Flask(__name__)
     api = Api(app)
-    api.add_resource(TaskList, '/tasks/<string:id>')
+    api.add_resource(TaskList, '/tasks')
+    api.add_resource(Task, '/tasks/<int:task_id>')
+
+    # CORS
+    cors = CORS(app, resources={
+        r"/tasks": {"origins": "*"},
+        r"/tasks/*": {"origins": "*"}
+    })
 
     # run
     app.run(debug=True)
