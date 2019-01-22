@@ -5,19 +5,35 @@ var tasksModule = (
         /**
          * Request Tasks array from server
          */
-        function _getItems() {
+        function _getItems(url, callback) {
             var xmlhttp = new XMLHttpRequest();
+            xmlhttp.arguments = Array.prototype.slice.call(arguments, 2);
+            xmlhttp.callback = callback;
             xmlhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    var tasksArray = JSON.parse(this.responseText);
-                    return(tasksArray);
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        this.callback.apply(this, this.arguments);
+                    } else {
+                        console.warn(this.status, this.statusText);
+                    }
                 }
             };
-            xmlhttp.open('GET', 'http://127.0.0.1:5000/tasks');
+            xmlhttp.open('GET', url);
             xmlhttp.send();
         }
 
         return {
+
+            init() {
+                var prepareItems = function(items) {
+                    var inputItems = JSON.parse(this.responseText);
+                    console.log('?', inputItems);
+                    items = JSON.parse(this.responseText);
+                }
+                _getItems('http://127.0.0.1:5000/tasks', prepareItems, items);
+                console.log('!!!', items);
+            },
+
             addItem: function(item) {
                 item.id = counter;
                 counter++;
@@ -26,7 +42,7 @@ var tasksModule = (
             },
 
             getItems: function() {
-                return items;
+                return this.items;
             },
 
             getItem: function(id) {
@@ -37,3 +53,8 @@ var tasksModule = (
         }
     }
 )();
+
+/** Start work with Tasks module */
+tasksModule.init();
+
+console.log(tasksModule.getItems());
