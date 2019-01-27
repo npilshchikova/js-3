@@ -39,7 +39,7 @@ def random_date():
         final_date = current_date - datetime.timedelta(days=random.randint(0, 15))
     else:
         final_date = current_date + datetime.timedelta(days=random.randint(0, 15))
-    return final_date.strftime('%d-%m-%Y')
+    return final_date.strftime('%Y-%m-%d')
 
 
 def random_bool():

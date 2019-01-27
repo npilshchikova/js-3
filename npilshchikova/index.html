@@ -10,11 +10,35 @@
         <div class="viewport">
             <h1 class="m-3">ToDo</h1>
             <div class="card card-body">
-                <div id="add-task-panel">
-                    <button class="btn btn-primary">Add task</button>
+                <div id="add-task-panel" class="row">
+                    <div id="show-add-task-box" class="">
+                        <button class="btn btn-primary" id="show-add-task">Add task</button>
+                    </div>
+                    <form id="add-task-box" class="col-md-12 hidden">
+                        <div class="form-group row">
+                            <label for="task-name-input" class="col-md-2">Task name</label>
+                            <div class="col-md-10">
+                                <input id="task-name-input" class="form-control" type="text" name="name">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="task-body-input" class="col-md-2">Task description</label>
+                            <div class="col-md-10">
+                                <textarea id="task-body-input" class="form-control" type="text" name="description" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="task-deadline-input" class="col-md-2">Deadline</label>
+                            <div class="col-md-2">
+                                <input id="task-deadline-input" class="form-control" type="date" name="deadline">
+                            </div>
+                        </div>
+                        <input id="submit-task-form" type="submit" value= "Submit" class="btn btn-success">
+                        <button id="cancel-add-task" class="btn btn-danger">Cancel</button>
+                    </form>
                 </div>
             </div>
-            <div class="row">
+            <div class="row mr-0">
                 <div class="col-md-3 card card-body">
                     <p>Filter tasks by:</p>
                     <ul class="list-group list-group-flush">
