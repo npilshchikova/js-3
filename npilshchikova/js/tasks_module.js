@@ -63,11 +63,8 @@ var tasksModule = (
             doneButton.setAttribute('class', 'btn btn-success m-1');
             doneButton.textContent = 'Done';
             doneButton.addEventListener('click', function() {
-                console.log('Done button');
                 if (confirm('Are you shoure that task "' + taskItem.name + '" done?')) {
-                    console.log('done');
-                } else {
-                    console.log('not done');
+                    _setTaskDone(url, taskItem.id);
                 }
             });
             taskBody.appendChild(doneButton);
@@ -76,35 +73,53 @@ var tasksModule = (
             deleteButton.textContent = 'Delete';
             deleteButton.setAttribute('class', 'btn btn-danger m-1');
             deleteButton.addEventListener('click', function() {
-                console.log('Delete button');
                 if (confirm('Are you shoure you want to delete task "' + taskItem.name + '"?')) {
-                    console.log('delete');
-                } else {
-                    console.log('not delete');
+                    _deleteTask(url, taskItem.id);
                 }
             });
             taskBody.appendChild(deleteButton);
 
             if (taskItem.done) {
-                taskHeaderText.setAttribute('class', 'text-success');
-                taskHeaderText.textContent += ' (Done)';
-                doneButton.classList.add('hidden');
+                _markTaskDone(taskBox);
             } else {
                 // task not done
                 if (taskItem.taskExpired()) {
-                    taskHeaderText.textContent += ' (Expired, Not Done)';
+                    taskHeaderText.textContent += ' - Expired!';
                     taskHeaderText.setAttribute('class', 'text-danger');
                 }
             }
         }
 
         /**
-         * Send DELETE request to server and delete Task item from page
-         * 
-         * @param {number} taskId 
+         * Mark task as Done
          */
-        function _deleteTask(taskId) {
-            return;
+        function _markTaskDone(taskBox) {
+            var taskHeaderText = taskBox.getElementsByTagName('h5')[0];
+            var doneButton = taskBox.getElementsByClassName('btn-success')[0];
+            taskHeaderText.setAttribute('class', 'text-success');
+            taskHeaderText.textContent += ' (Done)';
+            doneButton.classList.add('hidden');
+        }
+
+        /**
+         * Send DELETE request to server and delete Task item from page
+         */
+        function _deleteTask(url, id) {
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.taskId = id;
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        // remove element from page
+                        var taskBox = document.getElementById(this.taskId);
+                        taskBox.parentNode.removeChild(taskBox);
+                    } else {
+                        console.warn(this.status, this.statusText);
+                    }
+                }
+            };
+            xmlhttp.open('DELETE', url + '/' + id);
+            xmlhttp.send();
         }
 
         /**
@@ -136,8 +151,24 @@ var tasksModule = (
         /**
          * Set task status to Done (PUT request to server) and update task box
          */
-        function _markTaskDone(url, id) {
-            return;
+        function _setTaskDone(url, id) {
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.callback = _markTaskDone;
+            xmlhttp.taskBox = document.getElementById(id);
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        this.callback.call(this, this.taskBox);
+                    } else {
+                        console.warn(this.status, this.statusText);
+                    }
+                }
+            };
+            xmlhttp.open('PUT', url + '/' + id);
+            xmlhttp.setRequestHeader("Content-Type", "application/json");
+            xmlhttp.send(JSON.stringify({
+                done: true
+            }));
         }
 
         /**
