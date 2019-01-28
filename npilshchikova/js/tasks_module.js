@@ -1,7 +1,8 @@
 var tasksModule = (
     function () {
-        var url = 'http://127.0.0.1:5000/tasks';
+        var url;
         var itemsBox = document.getElementById('taskbox');
+        var taskItems = [];
 
         /**
          * Request Tasks array from server
@@ -50,7 +51,7 @@ var tasksModule = (
 
             /** Task body content */
             var deadline = document.createElement('h6');
-            deadline.textContent = 'Deadline: ' + taskItem.deadline;
+            deadline.textContent = 'Deadline: ' + taskItem.getDeadlineString();
             deadline.setAttribute('class', 'card-subtitle mb-2 text-muted');
             taskBody.appendChild(deadline);
       
@@ -107,12 +108,16 @@ var tasksModule = (
         function _deleteTask(url, id) {
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.taskId = id;
+            xmlhttp.taskItems = taskItems;
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4) {
                     if (this.status == 200) {
                         // remove element from page
                         var taskBox = document.getElementById(this.taskId);
                         taskBox.parentNode.removeChild(taskBox);
+                        // remove element from taskItems
+                        var index = this.taskItems.map(function(e) { return e.id; }).indexOf(this.taskId);
+                        this.taskItems.splice(index, 1);
                     } else {
                         console.warn(this.status, this.statusText);
                     }
@@ -128,11 +133,14 @@ var tasksModule = (
         function _addTask(url, id, name, description, deadline) {
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.callback = _drawTask.bind(this);
-            xmlhttp.newTask = new taskItem(id, name, description, Date(deadline), false);
+            xmlhttp.taskItems = taskItems;
+            xmlhttp.newTask = new taskItem(id, name, description, deadline, false);
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4) {
                     if (this.status == 201) {
                         this.callback.call(this, this.newTask);
+                        // add new task to Items
+                        this.taskItems.push(this.newTask);
                     } else {
                         console.warn(this.status, this.statusText);
                     }
@@ -154,11 +162,15 @@ var tasksModule = (
         function _setTaskDone(url, id) {
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.callback = _markTaskDone;
-            xmlhttp.taskBox = document.getElementById(id);
+            xmlhttp.taskItems = taskItems;
+            xmlhttp.taskId = id;
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4) {
                     if (this.status == 200) {
-                        this.callback.call(this, this.taskBox);
+                        this.callback.call(this, document.getElementById(this.taskId));
+                        // update task state in Items
+                        var index = this.taskItems.map(function(e) { return e.id; }).indexOf(this.taskId);
+                        this.taskItems[index].done = true;
                     } else {
                         console.warn(this.status, this.statusText);
                     }
@@ -175,22 +187,67 @@ var tasksModule = (
          * Hide tasks which were filtered out
          */
         function _filterTasks(taskStatus, taskDeadline) {
-            var renderedTasks = document.getElementsByClassName('task-item-box');
-            renderedTasks.forEach(function(taskNode) {
+            taskItems.forEach(function(task) {
+                var filteredByStatus = false;
+                var filteredByDeadline = false;
+
+                // check task status
                 switch (taskStatus) {
-                    case "done":
+                    case 'done':
+                        if (!task.done) { filteredByStatus = true; }
                         break;
-                    case "not done":
+                    case 'not done':
+                        if (task.done) { filteredByStatus = true; }
                         break;
                     default:
+                        break;  // filtered == false
+                }
+
+                // check task deadline
+                switch (taskDeadline) {
+                    case 'expired':
+                        if (!task.taskExpired()) { filteredByDeadline = true; }
+                        // today tasks may be here, filter them too:
+                        if (task.deadlineIsHere()) { filteredByDeadline = true; }
                         break;
+                    case 'today':
+                        if (!task.deadlineIsHere()) { filteredByDeadline = true; }
+                        break;
+                    case 'tomorrow':
+                        if (!task.deadlineIsComing()) { filteredByDeadline = true; }
+                        break;
+                    case 'in a week':
+                        if (!task.deadlineInWeek()) { filteredByDeadline = true; }
+                        // but case 'tomorrow' not interesting here, so:
+                        if (task.deadlineIsComing()) { filteredByDeadline = true; }
+                        break;
+                    default:
+                        break;  // filtered == false
+                }
+
+                // finally, set task visibility
+                var taskBox = document.getElementById(task.id);
+                if (filteredByStatus || filteredByDeadline) {
+                    if (!taskBox.classList.contains('hidden')) {
+                        taskBox.classList.add('hidden');
+                    }
+                } else {
+                    if (taskBox.classList.contains('hidden')) {
+                        taskBox.classList.remove('hidden');
+                    }
                 }
             })
         }
 
         return {
 
-            init() {
+            init(targetUrl) {
+                url = targetUrl;
+
+                // reset selectors
+                document.getElementById('task-status-select').selectedIndex = "0";
+                document.getElementById('task-deadline-select').selectedIndex = "0";
+
                 // add listener to `add task` button
                 var addTaskButton = document.getElementById('show-add-task');
                 addTaskButton.addEventListener('click', function() {
@@ -230,16 +287,29 @@ var tasksModule = (
                 });
 
                 // load data from server
-                var prepareItems = function() {
+                var prepareItems = function(taskItems) {
                     var inputItems = JSON.parse(this.responseText);
                     for (var i = 0; i < inputItems.length; i++) {
                         // from the last item to first
                         var next = inputItems[i];
-                        var nextTask = new taskItem(next.id, next.name, next.description, Date.parse(next.deadline), next.done);
+                        var nextTask = new taskItem(
+                            next.id, 
+                            next.name, 
+                            next.description, 
+                            next.deadline, 
+                            next.done
+                        );
+                        taskItems.push(nextTask);
                         _drawTask(nextTask);
                     }
                 }
-                _getTasks(url, prepareItems);
+                _getTasks(url, prepareItems, taskItems);
+            },
+
+            filterTasks() {
+                var statusFilterState = document.getElementById('task-status-select').value;
+                var deadlineFilterState = document.getElementById('task-deadline-select').value;
+                _filterTasks(statusFilterState, deadlineFilterState);
             }
         }
     }
@@ -248,4 +318,4 @@ var tasksModule = (
 
 /** Start work with Tasks module */
 
-tasksModule.init();
+tasksModule.init('http://127.0.0.1:5000/tasks');

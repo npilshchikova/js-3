@@ -41,23 +41,23 @@
             <div class="row mr-0">
                 <div class="col-md-3 card card-body">
                     <p>Filter tasks by:</p>
-                    <ul class="list-group list-group-flush">
+                    <ul class="list-group list-group-flush" id="task-filters-list">
                         <li class="list-group-item form-group">
                             <label for="task-status-select">Task status</label>
-                            <select class="form-control" id="task-status-select">
-                                <option></option>
-                                <option>done</option>
-                                <option>not done</option>
+                            <select class="form-control" onchange="tasksModule.filterTasks()" id="task-status-select">
+                                <option value=""></option>
+                                <option value="done">done</option>
+                                <option value="not done">not done</option>
                             </select>
                         </li>
                         <li class="list-group-item form-group">
                             <label for="task-deadline-select">Deadline</label>
-                            <select class="form-control" id="task-deadline-select">
-                                <option></option>
-                                <option>expired</option>
-                                <option>today</option>
-                                <option>tomorrow</option>
-                                <option>in a week</option>
+                            <select class="form-control" onchange="tasksModule.filterTasks()" id="task-deadline-select">
+                                <option value=""></option>
+                                <option value="expired">expired</option>
+                                <option value="today">today</option>
+                                <option value="tomorrow">tomorrow</option>
+                                <option value="in a week">in a week</option>
                             </select>
                         </li>
                     </ul>
@@ -69,6 +69,5 @@
         </div>
         <script type="text/javascript" src="js/task.js"></script>
         <script type="text/javascript" src="js/tasks_module.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
     </body>
 </html>
