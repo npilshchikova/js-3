@@ -28,5 +28,8 @@
   "homepage": "https://github.com/epam-js-dec-2018/js-3#readme",
   "dependencies": {
     "bootstrap": "^4.2.1"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1"
   }
 }

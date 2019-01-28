@@ -138,8 +138,6 @@ class Task(TaskList):
     def delete(self, task_id):
         global tasks
         tasks = [task for task in tasks if task['id'] != task_id]
-        for i in tasks:
-            print(i)
         return 'Task with id {} deleted'.format(task_id), 200
 
 
@@ -157,4 +155,4 @@ if __name__ == '__main__':
     })
 
     # run
-    app.run(debug=True)
+    app.run()
